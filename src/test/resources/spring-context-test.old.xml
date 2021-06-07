@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+        http://www.springframework.org/schema/security https://www.springframework.org/schema/security/spring-security.xsd">
+
+    <import resource="/spring-context.xml" />
+
+    <security:authentication-manager>
+        <security:authentication-provider>
+            <security:user-service>
+                <security:user name="reader" password="{noop}readerpass" authorities="ROLE_READER" />
+                <security:user name="writer" password="{noop}writerpass" authorities="ROLE_WRITER" />
+                <security:user name="admin" password="{noop}adminpass"
+                    authorities="ROLE_READER,ROLE_WRITER" />
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <bean class="org.springframework.security.authentication.DefaultAuthenticationEventPublisher" />
+
+    <bean class="ru.akh.spring_web.event.AuthenticationEvents" />
+
+    <bean id="debugInterceptor" class="ru.akh.spring_web.interceptor.DebugInterceptor" />
+
+    <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+        <property name="beanNames" value="bookRepository" />
+        <property name="interceptorNames">
+            <list>
+                <value>debugInterceptor</value>
+            </list>
+        </property>
+    </bean>
+
+    <beans profile="jdbc,jpa,hibernate">
+
+        <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+            <property name="driverClassName" value="${jdbc.driverClassName}" />
+            <property name="url" value="${jdbc.url}" />
+            <property name="username" value="${jdbc.user}" />
+            <property name="password" value="${jdbc.pass}" />
+        </bean>
+
+        <jdbc:initialize-database data-source="dataSource">
+            <jdbc:script location="classpath:/books-create-schema.sql" />
+            <jdbc:script location="classpath:/books-fill.sql" />
+        </jdbc:initialize-database>
+
+    </beans>
+
+</beans>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/jee https://www.springframework.org/schema/jee/spring-jee.xsd
+        http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/security https://www.springframework.org/schema/security/spring-security.xsd
+        http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <context:property-placeholder location="classpath:/application.properties" />
+
+    <context:annotation-config />
+
+    <security:http>
+
+        <security:http-basic />
+
+        <security:intercept-url pattern="/**" access="authenticated" />
+        <!--
+        <security:intercept-url pattern="/books/*" method="GET" access="ROLE_READER" />
+        <security:intercept-url pattern="/books/*" method="PUT" access="ROLE_WRITER" />
+        <security:intercept-url pattern="/books/*" method="POST" access="ROLE_WRITER" />
+        -->
+
+        <security:csrf disabled="true" />
+
+    </security:http>
+
+    <security:global-method-security secured-annotations="enabled" />
+
+    <mvc:annotation-driven validator="globalValidator">
+        <!--
+        <mvc:argument-resolvers>
+            <bean class="org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver" />
+        </mvc:argument-resolvers>
+        -->
+        <mvc:message-converters register-defaults="true">
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter" />
+            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
+            <bean class="org.springframework.http.converter.ResourceHttpMessageConverter" />
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <context:component-scan
+        base-package="ru.akh.spring_web.controller,ru.akh.spring_web.dao" />
+
+    <bean id="globalValidator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" />
+
+    <bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
+
+    <beans profile="jdbc">
+
+        <bean class="org.springframework.jdbc.support.lob.DefaultLobHandler" />
+
+        <jee:jndi-lookup id="dataSource" jndi-name="jdbc/appDataSource" />
+
+    </beans>
+
+    <beans profile="jpa">
+
+        <jee:jndi-lookup id="dataSource" jndi-name="jdbc/appDataSource" />
+
+        <bean id="emf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+            <property name="dataSource" ref="dataSource" />
+            <property name="loadTimeWeaver">
+                <bean class="org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver" />
+            </property>
+            <property name="jpaVendorAdapter">
+                <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
+            </property>
+        </bean>
+
+        <bean id="txManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+            <property name="entityManagerFactory" ref="emf" />
+        </bean>
+
+        <tx:annotation-driven transaction-manager="txManager" />
+
+        <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor" />
+
+    </beans>
+
+    <beans profile="hibernate">
+
+        <jee:jndi-lookup id="dataSource" jndi-name="jdbc/appDataSource" />
+
+        <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+            <property name="dataSource" ref="dataSource" />
+            <property name="mappingResources">
+                <list>
+                    <value>book.hbm.xml</value>
+                </list>
+            </property>
+            <property name="hibernateProperties">
+                <value>
+                    hibernate.dialect=${hibernate.dialect}
+                </value>
+            </property>
+        </bean>
+
+        <bean id="txManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+            <property name="sessionFactory" ref="sessionFactory"/>
+        </bean>
+
+        <tx:annotation-driven transaction-manager="txManager" />
+
+    </beans>
+
+</beans>
