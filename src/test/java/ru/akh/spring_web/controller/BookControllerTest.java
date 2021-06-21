@@ -15,7 +15,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 import ru.akh.spring_web.dto.Author;
 import ru.akh.spring_web.dto.Book;
 
-@ActiveProfiles("jpa")
+@ActiveProfiles("mongodb")
 public class BookControllerTest extends AbstractControllerTest {
 
     @Test

@@ -16,7 +16,7 @@ import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 import org.springframework.web.reactive.function.BodyInserters;
 
-@ActiveProfiles("jpa")
+@ActiveProfiles("mongodb")
 public class BookContentControllerTest extends AbstractControllerTest {
 
     @Test

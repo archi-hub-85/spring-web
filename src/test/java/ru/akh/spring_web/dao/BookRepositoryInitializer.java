@@ -16,8 +16,8 @@ import ru.akh.spring_web.dto.Book;
 import ru.akh.spring_web.dto.BookContent;
 
 @Component
-@Profile("inMemory")
-public class InMemoryBookRepositoryInitializer {
+@Profile({ "inMemory", "mongodb" })
+public class BookRepositoryInitializer {
 
     @Autowired
     private BookRepository repository;

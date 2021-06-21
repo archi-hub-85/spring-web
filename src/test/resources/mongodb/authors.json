@@ -1,0 +1,15 @@
+{
+    "bsonType": "object",
+    "required": [
+        "_id",
+        "name"
+    ],
+    "properties": {
+        "_id": {
+            "bsonType": "long"
+        },
+        "name": {
+            "bsonType": "string"
+        }
+    }
+}

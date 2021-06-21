@@ -6,15 +6,33 @@
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+        <append>false</append>
+        <file>target/spring-web-test.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
+    <logger name="org.springframework" level="info" />
+    <logger name="org.springframework.boot" level="info" />
+    <logger name="org.springframework.data" level="info" />
     <logger name="org.springframework.security" level="info" />
     <logger name="org.hibernate" level="info" />
 
+    <logger name="org.mongodb" level="info" />
+    <logger name="org.springframework.data.mongodb" level="info" />
+    <logger name="org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongo" level="warn" />
+    <logger name="de.flapdoodle.embed.mongo" level="debug" />
+
+    <logger name="ru.akh.spring.boot.autoconfigure.mongo" level="debug" />
+    <logger name="ru.akh.spring.boot.autoconfigure.mongo.embedded" level="info" />
     <logger name="ru.akh.spring_web" level="debug" />
     <logger name="ru.akh.spring_web.interceptor.DebugInterceptor" level="trace" />
 
     <root level="info">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="file" />
     </root>
 
 </configuration>

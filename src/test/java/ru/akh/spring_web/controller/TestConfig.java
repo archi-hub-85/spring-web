@@ -3,6 +3,8 @@ package ru.akh.spring_web.controller;
 import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
@@ -25,7 +27,7 @@ public class TestConfig {
     }
 
     @TestConfiguration
-    public class TestSecurityConfig extends WebSecurityConfigurerAdapter {
+    public static class TestSecurityConfig extends WebSecurityConfigurerAdapter {
 
         @Override
         protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -37,6 +39,13 @@ public class TestConfig {
                     .and().withUser(UsersConstants.ADMIN_USERNAME).password("{noop}" + UsersConstants.ADMIN_PASSWORD)
                     .roles("READER", "WRITER");
         }
+
+    }
+
+    @TestConfiguration
+    @Profile("mongodb")
+    @ComponentScan("ru.akh.spring.boot.autoconfigure.mongo")
+    public static class MongoConfig {
 
     }
 

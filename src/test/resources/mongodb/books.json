@@ -1,0 +1,35 @@
+{
+    "bsonType": "object",
+    "required": [
+        "_id",
+        "title",
+        "year",
+        "author"
+    ],
+    "properties": {
+        "_id": {
+            "bsonType": "long"
+        },
+        "title": {
+            "bsonType": "string"
+        },
+        "year": {
+            "bsonType": "int"
+        },
+        "author": {
+            "bsonType": "object",
+            "required": [
+                "$ref",
+                "$id"
+            ],
+            "properties": {
+                "$ref": {
+                    "bsonType": "string"
+                },
+                "$id": {
+                    "bsonType": "long"
+                }
+            }
+        }
+    }
+}
