@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.servlet.client.MockMvcWebTestClient;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -20,7 +19,6 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
 
 @SpringBootTest
 @Import(TestConfig.class)
-@TestPropertySource("classpath:/application-test.properties")
 abstract class AbstractControllerTest {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());

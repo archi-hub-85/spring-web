@@ -1,5 +1,6 @@
 package ru.akh.spring_web.dao.mongodb;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -82,22 +83,34 @@ public class MongoBookRepository implements BookRepository {
 
     @Override
     public List<Book> getTopBooks(Book.Field field, int limit) {
-        String fieldName;
         switch (field) {
         case ID:
         case TITLE:
-        case YEAR:
-            fieldName = field.toString().toLowerCase();
-            break;
-        case AUTHOR:
-            // TODO add implementation
-            throw new UnsupportedOperationException("Sorting by author not supported yet");
+        case YEAR: {
+            String fieldName = field.toString().toLowerCase();
+            Query query = new Query().with(Sort.by(fieldName)).limit(limit);
+            return template.find(query, Book.class, Constants.CollectionNames.BOOKS);
+        }
+        case AUTHOR: {
+            Query authorsQuery = new Query().with(Sort.by("name"));
+            List<Author> authors = template.find(authorsQuery, Author.class, Constants.CollectionNames.AUTHORS);
+            List<Long> authorIds = authors.stream().map(Author::getId).collect(Collectors.toList());
+
+            List<Book> books = new ArrayList<>(limit);
+            for (long authorId : authorIds) {
+                Query booksQuery = Query.query(Criteria.where("author.$id").is(authorId)).limit(limit - books.size());
+                List<Book> booksByAuthor = template.find(booksQuery, Book.class, Constants.CollectionNames.BOOKS);
+                books.addAll(booksByAuthor);
+                if (books.size() >= limit) {
+                    break;
+                }
+            }
+
+            return books;
+        }
         default:
             throw new IllegalArgumentException("Unknown field value: " + field);
         }
-
-        Query query = new Query().with(Sort.by(fieldName)).limit(limit);
-        return template.find(query, Book.class, Constants.CollectionNames.BOOKS);
     }
 
     @Override

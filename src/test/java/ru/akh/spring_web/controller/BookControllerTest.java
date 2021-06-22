@@ -1,12 +1,13 @@
 package ru.akh.spring_web.controller;
 
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
@@ -107,16 +108,50 @@ public class BookControllerTest extends AbstractControllerTest {
         expectError(putBookRequest(1L, "title", 2020, 100L, "author"));
     }
 
-    @DisplayName("testGetTopBooks")
-    @ParameterizedTest(name = ParameterizedTest.DISPLAY_NAME_PLACEHOLDER + "(" + ParameterizedTest.ARGUMENTS_PLACEHOLDER
-            + ")")
-    @EnumSource(Book.Field.class)
+    @Test
     @WithReader
-    public void testGetTopBooks(Book.Field field) {
-        int limit = 5;
-        getTopBooksRequest(field, limit)
+    public void testGetTopBooks() {
+        List<Book> allBooks = getTopBooksRequest(Book.Field.ID, 18)
                 .expectStatus().isOk()
-                .expectBodyList(Book.class).hasSize(limit);
+                .expectBodyList(Book.class).hasSize(18)
+                .returnResult().getResponseBody();
+
+        for (Book.Field field : Book.Field.values()) {
+            testGetTopBooks(allBooks, field);
+        }
+    }
+
+    private void testGetTopBooks(List<Book> allBooks, Book.Field field) {
+        logger.debug("testGetTopBooks: {}", field);
+
+        Comparator<Book> comparator;
+        switch (field) {
+        case ID:
+            comparator = Comparator.comparing(Book::getId);
+            break;
+        case TITLE:
+            comparator = Comparator.comparing(Book::getTitle);
+            break;
+        case YEAR:
+            comparator = Comparator.comparing(Book::getYear);
+            break;
+        case AUTHOR:
+            comparator = Comparator.comparing(((Function<Book, Author>) Book::getAuthor).andThen(Author::getName));
+            break;
+        default:
+            throw new IllegalArgumentException("Unknown field value: " + field);
+        }
+
+        int limit = 5;
+        List<Book> expectedBooks = allBooks.stream().sorted(comparator).limit(limit).collect(Collectors.toList());
+
+        List<Book> topBooks = getTopBooksRequest(field, limit)
+                .expectStatus().isOk()
+                .expectBodyList(Book.class).hasSize(limit)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(topBooks).usingElementComparator(comparator)
+                .isEqualTo(expectedBooks);
     }
 
     @Test
