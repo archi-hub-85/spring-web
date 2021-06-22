@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
@@ -26,10 +27,10 @@ public class InMemoryBookRepository implements BookRepository {
 
     static {
         FIELD_COMPARATORS.put(Book.Field.ID, Comparator.comparing(Book::getId));
-        FIELD_COMPARATORS.put(Book.Field.TITLE, Comparator.comparing(Book::getTitle, String.CASE_INSENSITIVE_ORDER));
+        FIELD_COMPARATORS.put(Book.Field.TITLE, Comparator.comparing(Book::getTitle));
         FIELD_COMPARATORS.put(Book.Field.YEAR, Comparator.comparing(Book::getYear));
-        FIELD_COMPARATORS.put(Book.Field.AUTHOR, Comparator.comparing(Book::getAuthor,
-                Comparator.comparing(Author::getName, String.CASE_INSENSITIVE_ORDER)));
+        FIELD_COMPARATORS.put(Book.Field.AUTHOR,
+                Comparator.comparing(((Function<Book, Author>) Book::getAuthor).andThen(Author::getName)));
     }
 
     private TreeMap<Long, Author> authors = new TreeMap<>();
