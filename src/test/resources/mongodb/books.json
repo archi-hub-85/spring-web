@@ -30,6 +30,15 @@
                     "bsonType": "long"
                 }
             }
+        },
+        "fileName": {
+            "bsonType": "string"
+        },
+        "mimeType": {
+            "bsonType": "string"
+        },
+        "content": {
+            "bsonType": "binData"
         }
     }
 }

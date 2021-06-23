@@ -125,14 +125,29 @@ public class MongoBookRepository implements BookRepository {
 
     @Override
     public BookContent getContent(long id) {
-        // TODO Auto-generated method stub
-        return null;
+        BookContent content = template.findById(id, BookContent.class, Constants.CollectionNames.BOOKS);
+        if (content == null) {
+            throw new BookNotFoundException(id);
+        }
+
+        if (content.getSize() == 0) {
+            content.setSize(content.getContent().length);
+        }
+
+        return content;
     }
 
     @Override
     @Transactional
     public void putContent(BookContent content) {
-        // TODO Auto-generated method stub
+        long id = content.getId();
+        UpdateResult updateResult = template.updateFirst(Query.query(Criteria.where("_id").is(id)),
+                new Update().set("fileName", content.getFileName()).set("mimeType", content.getMimeType())
+                        .set("content", content.getContent()),
+                BookContent.class, Constants.CollectionNames.BOOKS);
+        if (updateResult.getMatchedCount() == 0) {
+            throw new BookNotFoundException(id);
+        }
     }
 
 }
