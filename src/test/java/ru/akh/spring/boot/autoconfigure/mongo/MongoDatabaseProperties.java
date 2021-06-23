@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
@@ -16,6 +15,8 @@ import org.springframework.validation.annotation.Validated;
 
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
+
+import ru.akh.spring.validation.constraints.ValidateClassExpression;
 
 /**
  * Configuration of Mongo database.
@@ -120,17 +121,20 @@ public class MongoDatabaseProperties {
         /**
          * @see org.springframework.data.mongodb.core.CollectionOptions.ValidationOptions
          */
+        @ValidateClassExpression(value = "(#this.schema == null) != (#this.type == null)", message = "Schema or type must be defined.")
         public static class ValidationOptions {
 
-            @NotNull
             private final Resource schema;
+
+            private final Class<?> type;
 
             private final ValidationLevel level;
 
             private final ValidationAction action;
 
-            public ValidationOptions(Resource schema, ValidationLevel level, ValidationAction action) {
+            public ValidationOptions(Resource schema, Class<?> type, ValidationLevel level, ValidationAction action) {
                 this.schema = schema;
+                this.type = type;
                 this.level = level;
                 this.action = action;
             }
@@ -140,6 +144,15 @@ public class MongoDatabaseProperties {
              */
             public Resource getSchema() {
                 return schema;
+            }
+
+            /**
+             * Fully qualified name of the domain type.
+             * 
+             * @see org.springframework.data.mongodb.core.MongoJsonSchemaCreator#createSchemaFor(Class)
+             */
+            public Class<?> getType() {
+                return type;
             }
 
             /**

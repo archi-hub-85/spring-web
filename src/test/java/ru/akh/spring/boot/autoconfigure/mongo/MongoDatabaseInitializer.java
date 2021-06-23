@@ -13,6 +13,7 @@ import org.apache.commons.logging.LogFactory;
 import org.bson.Document;
 import org.springframework.core.log.LogMessage;
 import org.springframework.data.mongodb.core.CollectionOptions;
+import org.springframework.data.mongodb.core.MongoJsonSchemaCreator;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Collation;
 import org.springframework.data.mongodb.core.schema.MongoJsonSchema;
@@ -39,10 +40,14 @@ public class MongoDatabaseInitializer {
 
     @PostConstruct
     public void init() {
-        properties.getCollections().forEach(this::ensureCollection);
+        createCollections();
     }
 
-    private void ensureCollection(MongoDatabaseProperties.CollectionOptions options) {
+    private void createCollections() {
+        properties.getCollections().forEach(this::createCollection);
+    }
+
+    private void createCollection(MongoDatabaseProperties.CollectionOptions options) {
         CollectionOptions collectionOptions = CollectionOptions.empty();
         if (options.getMaxDocuments() != null) {
             collectionOptions = collectionOptions.maxDocuments(options.getMaxDocuments());
@@ -59,17 +64,24 @@ public class MongoDatabaseInitializer {
 
         MongoDatabaseProperties.CollectionOptions.ValidationOptions validationOptions = options.getValidationOptions();
         if (validationOptions != null) {
-            String jsonSchema;
-            try (Reader reader = new InputStreamReader(validationOptions.getSchema().getInputStream(),
-                    StandardCharsets.UTF_8)) {
-                jsonSchema = FileCopyUtils.copyToString(reader);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+            MongoJsonSchema schema;
+            if (validationOptions.getSchema() != null) {
+                String jsonSchema;
+                try (Reader reader = new InputStreamReader(validationOptions.getSchema().getInputStream(),
+                        StandardCharsets.UTF_8)) {
+                    jsonSchema = FileCopyUtils.copyToString(reader);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+
+                schema = MongoJsonSchema.of(Document.parse(jsonSchema));
+            } else {
+                schema = MongoJsonSchemaCreator.create(template.getConverter())
+                        .createSchemaFor(validationOptions.getType());
             }
 
-            MongoJsonSchema schema = MongoJsonSchema.of(Document.parse(jsonSchema));
-            collectionOptions.validation(new CollectionOptions.ValidationOptions(Validator.schema(schema),
-                    validationOptions.getLevel(), validationOptions.getAction()));
+            collectionOptions = collectionOptions.validation(new CollectionOptions.ValidationOptions(
+                    Validator.schema(schema), validationOptions.getLevel(), validationOptions.getAction()));
         }
 
         String collectionName = options.getName();
