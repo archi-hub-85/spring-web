@@ -1,13 +1,23 @@
 package ru.akh.spring_web.dto;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 public class BookContent {
 
+    @Min(1)
     private long id;
 
+    @NotBlank
     private String fileName;
 
+    @NotBlank
     private String mimeType;
 
+    @NotNull
+    @Size(min = 1)
     private byte[] content;
 
     private long size;

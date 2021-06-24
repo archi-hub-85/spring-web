@@ -1,6 +1,7 @@
 package ru.akh.spring_web.dto;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 public class Book {
@@ -14,7 +15,7 @@ public class Book {
 
     private Long id;
 
-    @NotNull
+    @NotBlank
     private String title;
 
     private int year;

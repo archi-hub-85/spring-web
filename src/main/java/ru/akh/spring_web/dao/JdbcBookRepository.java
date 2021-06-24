@@ -22,6 +22,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import ru.akh.spring_web.dao.exception.AuthorNotFoundException;
+import ru.akh.spring_web.dao.exception.BookContentNotFoundException;
 import ru.akh.spring_web.dao.exception.BookNotFoundException;
 import ru.akh.spring_web.dto.Author;
 import ru.akh.spring_web.dto.Book;
@@ -201,18 +202,22 @@ public class JdbcBookRepository implements BookRepository {
 
     @Override
     public BookContent getContent(long id) {
-        return jdbcTemplate.queryForObject(
-                GET_CONTENT_QUERY,
-                (resultSet, rowNum) -> {
-                    BookContent bookContent = new BookContent();
-                    bookContent.setId(id);
-                    bookContent.setFileName(resultSet.getString(ColumnNames.FILENAME));
-                    bookContent.setMimeType(resultSet.getString(ColumnNames.MIMETYPE));
-                    bookContent.setContent(lobHandler.getBlobAsBytes(resultSet, ColumnNames.CONTENT));
-                    bookContent.setSize(resultSet.getLong(ColumnNames.SIZE));
-                    return bookContent;
-                },
-                id);
+        try {
+            return jdbcTemplate.queryForObject(
+                    GET_CONTENT_QUERY,
+                    (resultSet, rowNum) -> {
+                        BookContent bookContent = new BookContent();
+                        bookContent.setId(id);
+                        bookContent.setFileName(resultSet.getString(ColumnNames.FILENAME));
+                        bookContent.setMimeType(resultSet.getString(ColumnNames.MIMETYPE));
+                        bookContent.setContent(lobHandler.getBlobAsBytes(resultSet, ColumnNames.CONTENT));
+                        bookContent.setSize(resultSet.getLong(ColumnNames.SIZE));
+                        return bookContent;
+                    },
+                    id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new BookContentNotFoundException(id);
+        }
     }
 
     @Override

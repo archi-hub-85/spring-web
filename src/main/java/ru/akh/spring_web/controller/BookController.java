@@ -6,7 +6,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import ru.akh.spring_web.access.SecuredWriter;
 import ru.akh.spring_web.access.SecuredReader;
+import ru.akh.spring_web.access.SecuredWriter;
 import ru.akh.spring_web.dao.BookRepository;
 import ru.akh.spring_web.dto.Book;
 
@@ -27,8 +26,11 @@ import ru.akh.spring_web.dto.Book;
 @RequestMapping("/books")
 public class BookController {
 
-    @Autowired
-    private BookRepository repository;
+    private final BookRepository repository;
+
+    public BookController(BookRepository repository) {
+        this.repository = repository;
+    }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @SecuredReader

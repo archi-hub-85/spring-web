@@ -1,12 +1,12 @@
 package ru.akh.spring_web.dto;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 public class Author {
 
     private Long id;
 
-    @NotNull
+    @NotBlank
     private String name;
 
     public Long getId() {

@@ -6,23 +6,21 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 
 import ru.akh.spring_web.dto.Author;
 import ru.akh.spring_web.dto.Book;
 import ru.akh.spring_web.dto.BookContent;
 
-@Component
-@Profile({ "inMemory", "mongodb" })
 public class BookRepositoryInitializer {
 
-    @Autowired
-    private BookRepository repository;
+    private final BookRepository repository;
 
-    private Map<String, Author> authors = new HashMap<>();
+    private final Map<String, Author> authors = new HashMap<>();
+
+    public BookRepositoryInitializer(BookRepository repository) {
+        this.repository = repository;
+    }
 
     @PostConstruct
     public void fill() {

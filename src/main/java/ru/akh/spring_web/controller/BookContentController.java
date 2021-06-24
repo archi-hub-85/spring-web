@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -19,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import ru.akh.spring_web.access.SecuredWriter;
 import ru.akh.spring_web.access.SecuredReader;
+import ru.akh.spring_web.access.SecuredWriter;
 import ru.akh.spring_web.dao.BookRepository;
 import ru.akh.spring_web.dao.exception.BookException;
 import ru.akh.spring_web.dto.BookContent;
@@ -29,8 +28,11 @@ import ru.akh.spring_web.dto.BookContent;
 @RequestMapping("/books")
 public class BookContentController {
 
-    @Autowired
-    private BookRepository repository;
+    private final BookRepository repository;
+
+    public BookContentController(BookRepository repository) {
+        this.repository = repository;
+    }
 
     @PostMapping(path = "/upload")
     @SecuredWriter

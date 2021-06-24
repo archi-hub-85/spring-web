@@ -1,288 +1,194 @@
 package ru.akh.spring_web.controller;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Arrays;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import ru.akh.spring_web.dto.Author;
 import ru.akh.spring_web.dto.Book;
 
-//@ActiveProfiles("mongodb")
+@WebMvcTest(BookController.class)
 public class BookControllerTest extends AbstractControllerTest {
 
     @Test
     @WithReader
-    public void testGetBook() {
-        Book book = getBook(1);
-        Author author = book.getAuthor();
+    public void testGetBook() throws Exception {
+        long id = 1;
 
-        Assertions.assertEquals(1, book.getId(), "book.id");
-        Assertions.assertEquals("The Dark Tower: The Gunslinger", book.getTitle(), "book.title");
-        Assertions.assertEquals(1982, book.getYear(), "book.year");
-        Assertions.assertNotNull(author, "book.author");
-        Assertions.assertEquals(1, author.getId(), "author.name");
-        Assertions.assertEquals("Stephen King", author.getName(), "author.name");
+        Book storedBook = createBook(id, "title1", 2021, 2L, "name1");
+        Author storedAuthor = storedBook.getAuthor();
+        Mockito.when(repository.get(id)).thenReturn(storedBook);
+
+        performGetBook(id)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(id))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(storedBook.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.year").value(storedBook.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.author.id").value(storedAuthor.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.author.name").value(storedAuthor.getName()));
     }
 
     @Test
     @WithWriter
-    public void testPutBook() {
-        long id = putBook(null, "titleNew", 2020, null, "authorNew");
-        Assertions.assertTrue(id > 18, "new book's id must be greater than 18");
-    }
+    public void testPutBook() throws Exception {
+        Mockito.when(repository.put(Mockito.any())).thenReturn(1L);
 
-    @Test
-    @WithAdmin
-    public void testUpdateBook() {
-        String authorName = "authorNew3";
-        String title = "titleNew3";
-        int year = 2020;
-        long id = putBook(null, title, year, null, authorName);
-        Book newBook = getBook(id);
-        Author newAuthor = newBook.getAuthor();
-
-        Assertions.assertEquals(id, newBook.getId(), "newBook.id");
-        Assertions.assertEquals(title, newBook.getTitle(), "newBook.title");
-        Assertions.assertEquals(year, newBook.getYear(), "newBook.year");
-        Assertions.assertNotNull(newAuthor, "newBook.author");
-        Assertions.assertTrue(newAuthor.getId() > 3, "newAuthor's id nust be greater than 3");
-        Assertions.assertEquals(authorName, newAuthor.getName(), "newAuthor.name");
-
-        String newAuthorName = "authorNew3_2";
-        String newTitle = "titleNew3_2";
-        int newYear = 2021;
-        putBook(id, newTitle, newYear, newAuthor.getId(), newAuthorName);
-        Book updatedBook = getBook(id);
-        Author updatedAuthor = updatedBook.getAuthor();
-
-        Assertions.assertEquals(id, updatedBook.getId(), "updatedBook.id");
-        Assertions.assertEquals(newTitle, updatedBook.getTitle(), "updatedBook.title");
-        Assertions.assertEquals(newYear, updatedBook.getYear(), "updatedBook.year");
-        Assertions.assertNotNull(updatedAuthor, "updatedBook.author");
-        Assertions.assertEquals(newAuthor.getId(), updatedAuthor.getId(), "updatedAuthor.id");
-        Assertions.assertEquals(newAuthorName, updatedAuthor.getName(), "updatedAuthor.name");
+        performPutBook(1L, "title", 2021, 1L, "author")
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+                .andExpect(MockMvcResultMatchers.content().string("1"));
     }
 
     @Test
     @WithReader
-    public void testGetNonExistingBook() {
-        expectError(getBookRequest(100));
+    public void testGetTopBooks() throws Exception {
+        Book storedBook1 = createBook(1L, "title1", 2021, 1L, "name1");
+        Book storedBook2 = createBook(2L, "title2", 2022, 2L, "name2");
+        Mockito.when(repository.getTopBooks(Book.Field.ID, 2))
+                .thenReturn(Arrays.asList(storedBook1, storedBook2));
+
+        performGetTopBooks(Book.Field.ID, 2)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(storedBook1.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].title").value(storedBook1.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].year").value(storedBook1.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.id").value(storedBook1.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.name").value(storedBook1.getAuthor().getName()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(storedBook2.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].title").value(storedBook2.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].year").value(storedBook2.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.id").value(storedBook2.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.name").value(storedBook2.getAuthor().getName()));
+    }
+
+    @Test
+    @WithReader
+    public void testGetBooksByAuthor() throws Exception {
+        Book storedBook1 = createBook(1L, "title1", 2021, 1L, "name1");
+        Book storedBook2 = createBook(2L, "title2", 2022, 1L, "name1");
+        Mockito.when(repository.getBooksByAuthor("author"))
+                .thenReturn(Arrays.asList(storedBook1, storedBook2));
+
+        performGetBooksByAuthor("author")
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(storedBook1.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].title").value(storedBook1.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].year").value(storedBook1.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.id").value(storedBook1.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.name").value(storedBook1.getAuthor().getName()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(storedBook2.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].title").value(storedBook2.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].year").value(storedBook2.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.id").value(storedBook2.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.name").value(storedBook2.getAuthor().getName()));
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void testGetWithWrongUser() throws Exception {
+        performGetBook(1)
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
     @Test
     @WithWriter
-    public void testPutBookWithNonExistingId() {
-        expectError(putBookRequest(100L, "title", 2020, null, "author"));
+    public void testGetWithWrongRole() throws Exception {
+        performGetBook(1)
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void testPutWithWrongUser() throws Exception {
+        performPutBook(1L, "title", 2020, null, "author")
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    @Test
+    @WithReader
+    public void testPutWithWrongRole() throws Exception {
+        performPutBook(1L, "title", 2020, null, "author")
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void testGetTopBooksWithWrongUser() throws Exception {
+        performGetTopBooks(Book.Field.ID, 2)
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
     @Test
     @WithWriter
-    public void testPutBookWithoutTitle() {
-        expectError(putBookRequest(1L, null, 2020, null, "author"));
+    public void testGetTopBooksWithWrongRole() throws Exception {
+        performGetTopBooks(Book.Field.ID, 2)
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void testGetBooksByAuthorWithWrongUser() throws Exception {
+        performGetBooksByAuthor("author")
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
     @Test
     @WithWriter
-    public void testPutBookWithoutAuthor() {
-        expectError(putBookRequest(1L, "title", 2020, null, null));
+    public void testGetBooksByAuthorWithWrongRole() throws Exception {
+        performGetBooksByAuthor("author")
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 
-    @Test
-    @WithWriter
-    public void testPutBookWithoutAuthorName() {
-        expectError(putBookRequest(1L, "title", 2020, 1L, null));
+    private ResultActions performGetBook(long id) throws Exception {
+        return mockMvc.perform(MockMvcRequestBuilders.get("/books/{id}", id).accept(MediaType.APPLICATION_JSON));
     }
 
-    @Test
-    @WithWriter
-    public void testPutBookWithNonExistingAuthorId() {
-        expectError(putBookRequest(1L, "title", 2020, 100L, "author"));
+    private ResultActions performPutBook(Long id, String title, int year, Long authorId, String authorName)
+            throws Exception {
+        // jsonBook = new ObjectMapper().writeValueAsString(book);
+        String jsonBook = "{ \"id\": " + id + ", \"title\": \"" + title + "\", \"year\": " + year
+                + ", \"author\": { \"id\": " + authorId + ", \"name\": \"" + authorName + "\" } }";
+
+        return mockMvc.perform(
+                MockMvcRequestBuilders.put("/books").with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(jsonBook));
     }
 
-    @Test
-    @WithReader
-    public void testGetTopBooks() {
-        List<Book> allBooks = getTopBooksRequest(Book.Field.ID, 18)
-                .expectStatus().isOk()
-                .expectBodyList(Book.class).hasSize(18)
-                .returnResult().getResponseBody();
-
-        for (Book.Field field : Book.Field.values()) {
-            testGetTopBooks(allBooks, field);
-        }
+    private ResultActions performGetTopBooks(Book.Field field, int limit) throws Exception {
+        return mockMvc.perform(MockMvcRequestBuilders.get("/books/").queryParam("field", String.valueOf(field))
+                .queryParam("top", String.valueOf(limit)).accept(MediaType.APPLICATION_JSON));
     }
 
-    private void testGetTopBooks(List<Book> allBooks, Book.Field field) {
-        logger.debug("testGetTopBooks: {}", field);
-
-        Comparator<Book> comparator;
-        switch (field) {
-        case ID:
-            comparator = Comparator.comparing(Book::getId);
-            break;
-        case TITLE:
-            comparator = Comparator.comparing(Book::getTitle);
-            break;
-        case YEAR:
-            comparator = Comparator.comparing(Book::getYear);
-            break;
-        case AUTHOR:
-            comparator = Comparator.comparing(((Function<Book, Author>) Book::getAuthor).andThen(Author::getName));
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown field value: " + field);
-        }
-
-        int limit = 5;
-        List<Book> expectedBooks = allBooks.stream().sorted(comparator).limit(limit).collect(Collectors.toList());
-
-        List<Book> topBooks = getTopBooksRequest(field, limit)
-                .expectStatus().isOk()
-                .expectBodyList(Book.class).hasSize(limit)
-                .returnResult().getResponseBody();
-
-        org.assertj.core.api.Assertions.assertThat(topBooks).usingElementComparator(comparator)
-                .isEqualTo(expectedBooks);
+    private ResultActions performGetBooksByAuthor(String author) throws Exception {
+        return mockMvc.perform(
+                MockMvcRequestBuilders.get("/books/").queryParam("author", author).accept(MediaType.APPLICATION_JSON));
     }
 
-    @Test
-    @WithReader
-    public void testGetTopBooksWithNullField() {
-        expectError(getTopBooksRequest(null, 5));
-    }
-
-    @Test
-    @WithReader
-    public void testGetTopBooksWithZeroLimit() {
-        expectError(getTopBooksRequest(Book.Field.ID, 0));
-    }
-
-    @Test
-    @WithReader
-    public void testGetBooksByAuthor() {
-        getBooksByAuthorRequest("Arthur Conan Doyle")
-                .expectStatus().isOk()
-                .expectBodyList(Book.class).hasSize(4);
-    }
-
-    @Test
-    @WithReader
-    public void testGetBooksByAuthorWithNullAuthor() {
-        expectError(getBooksByAuthorRequest(null));
-    }
-
-    @Test
-    @WithUser(username = UsersConstants.WRONG_USERNAME, password = UsersConstants.WRONG_PASSWORD)
-    public void testGetWithWrongUser() {
-        getBookRequest(1).expectStatus().isUnauthorized();
-    }
-
-    @Test
-    @WithUser(username = UsersConstants.READER_USERNAME, password = UsersConstants.WRONG_PASSWORD)
-    public void testGetWithWrongPassword() {
-        getBookRequest(1).expectStatus().isUnauthorized();
-    }
-
-    @Test
-    @WithWriter
-    public void testGetWithWrongRole() {
-        getBookRequest(1).expectStatus().isForbidden();
-    }
-
-    @Test
-    @WithUser(username = UsersConstants.WRONG_USERNAME, password = UsersConstants.WRONG_PASSWORD)
-    public void testPutWithWrongUser() {
-        putBookRequest(1L, "title", 2020, null, "author").expectStatus().isUnauthorized();
-    }
-
-    @Test
-    @WithUser(username = UsersConstants.WRITER_USERNAME, password = UsersConstants.WRONG_PASSWORD)
-    public void testPutWithWrongPassword() {
-        putBookRequest(1L, "title", 2020, null, "author").expectStatus().isUnauthorized();
-    }
-
-    @Test
-    @WithReader
-    public void testPutWithWrongRole() {
-        putBookRequest(1L, "title", 2020, null, "author").expectStatus().isForbidden();
-    }
-
-    private Book getBook(long id) {
-        EntityExchangeResult<Book> result = getBookRequest(id)
-                .expectStatus().isOk()
-                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-                .expectBody(Book.class).returnResult();
-
-        return result.getResponseBody();
-    }
-
-    private long putBook(Long id, String title, int year, Long authorId, String authorName) {
-        EntityExchangeResult<String> result = putBookRequest(id, title, year, authorId, authorName)
-                .expectStatus().isOk()
-                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_PLAIN)
-                .expectBody(String.class).returnResult();
-
-        return Long.valueOf(result.getResponseBody());
-    }
-
-    private ResponseSpec getBookRequest(long id) {
-        return client.get()
-                .uri("/books/{id}", Collections.singletonMap("id", id))
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange();
-    }
-
-    private ResponseSpec putBookRequest(Long id, String title, int year, Long authorId, String authorName) {
-        Author author = null;
-        if (authorId != null || authorName != null) {
-            author = new Author();
-            author.setId(authorId);
-            author.setName(authorName);
-        }
-
+    private static Book createBook(Long id, String title, int year, Long authorId, String authorName) {
         Book book = new Book();
         book.setId(id);
-        book.setAuthor(author);
         book.setTitle(title);
         book.setYear(year);
 
-        return client.put().uri("/books")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(book)
-                .exchange();
-    }
+        Author author = new Author();
+        author.setId(authorId);
+        author.setName(authorName);
+        book.setAuthor(author);
 
-    private ResponseSpec getTopBooksRequest(Book.Field field, int limit) {
-        return client.get()
-                .uri(uriBuilder -> uriBuilder.path("/books/").queryParam("field", field).queryParam("top", limit)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange();
-    }
-
-    private ResponseSpec getBooksByAuthorRequest(String author) {
-        return client.get()
-                .uri(uriBuilder -> uriBuilder.path("/books/").queryParam("author", author).build())
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange();
-    }
-
-    private void expectError(ResponseSpec responseSpec) {
-        responseSpec
-                .expectStatus().isBadRequest()
-                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_PLAIN)
-                .expectBody(String.class).consumeWith(result -> {
-                    logger.debug("message = {}", result.getResponseBody());
-                });
+        return book;
     }
 
 }

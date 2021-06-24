@@ -20,6 +20,7 @@ import com.mongodb.client.result.UpdateResult;
 
 import ru.akh.spring_web.dao.BookRepository;
 import ru.akh.spring_web.dao.exception.AuthorNotFoundException;
+import ru.akh.spring_web.dao.exception.BookContentNotFoundException;
 import ru.akh.spring_web.dao.exception.BookNotFoundException;
 import ru.akh.spring_web.dto.Author;
 import ru.akh.spring_web.dto.Book;
@@ -127,7 +128,7 @@ public class MongoBookRepository implements BookRepository {
     public BookContent getContent(long id) {
         BookContent content = template.findById(id, BookContent.class, Constants.CollectionNames.BOOKS);
         if (content == null) {
-            throw new BookNotFoundException(id);
+            throw new BookContentNotFoundException(id);
         }
 
         if (content.getSize() == 0) {

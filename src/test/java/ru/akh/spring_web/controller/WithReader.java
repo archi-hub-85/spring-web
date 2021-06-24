@@ -5,9 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.security.test.context.support.WithMockUser;
+
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@WithUser(username = UsersConstants.READER_USERNAME, password = UsersConstants.READER_PASSWORD)
+@WithMockUser(roles = "READER")
 public @interface WithReader {
 
 }
