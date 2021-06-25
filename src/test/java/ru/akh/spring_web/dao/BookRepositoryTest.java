@@ -200,7 +200,7 @@ public class BookRepositoryTest extends AbstractTest {
 
     @Test
     public void testPutContent() {
-        putContent(2, "/c:\\test.txt", "test content");
+        putContent(2, "test.txt", "test content");
     }
 
     @Test

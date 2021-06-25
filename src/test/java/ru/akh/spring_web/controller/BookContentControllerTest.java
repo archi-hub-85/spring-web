@@ -2,10 +2,12 @@ package ru.akh.spring_web.controller;
 
 import java.nio.charset.StandardCharsets;
 
-import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -25,28 +27,36 @@ public class BookContentControllerTest extends AbstractControllerTest {
     @WithReader
     public void testDownload() throws Exception {
         long id = 1;
-        String content = "The Dark Tower: The Gunslinger";
 
-        BookContent storedBookContent = new BookContent();
-        storedBookContent.setId(id);
-        storedBookContent.setFileName("dark_tower_1.txt");
-        storedBookContent.setMimeType(MediaType.TEXT_PLAIN_VALUE);
-        storedBookContent.setContent(content.getBytes(StandardCharsets.UTF_8));
-        Mockito.when(repository.getContent(id)).thenReturn(storedBookContent);
+        BookContent content = new BookContent();
+        content.setId(id);
+        content.setFileName("test.txt");
+        content.setMimeType(MediaType.TEXT_PLAIN_VALUE);
+        content.setContent("test content".getBytes(StandardCharsets.UTF_8));
+        Mockito.when(repository.getContent(id)).thenReturn(content);
 
         performDownload(id)
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.header().string(HttpHeaders.CONTENT_DISPOSITION,
-                        Matchers.containsString("filename=\"" + storedBookContent.getFileName() + "\"")))
+                        ContentDisposition.attachment().filename(content.getFileName()).build().toString()))
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
-                .andExpect(MockMvcResultMatchers.content().string(content));
+                .andExpect(MockMvcResultMatchers.content().bytes(content.getContent()));
     }
 
     @Test
     @WithWriter
     public void testUpload() throws Exception {
-        performUpload(2, "test.txt", "test content")
+        performUpload(2, "/c:\\test.txt", "test content")
                 .andExpect(MockMvcResultMatchers.status().isOk());
+
+        ArgumentCaptor<BookContent> captor = ArgumentCaptor.forClass(BookContent.class);
+        Mockito.verify(repository).putContent(captor.capture());
+        BookContent content = captor.getValue();
+        Assertions.assertEquals(2, content.getId(), "content.id");
+        Assertions.assertEquals("test.txt", content.getFileName(), "content.fileName");
+        Assertions.assertEquals(MediaType.TEXT_PLAIN_VALUE, content.getMimeType(), "content.mimeType");
+        Assertions.assertArrayEquals("test content".getBytes(StandardCharsets.UTF_8), content.getContent(),
+                "content.content");
     }
 
     @Test

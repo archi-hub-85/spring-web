@@ -23,18 +23,18 @@ public class BookControllerTest extends AbstractControllerTest {
     public void testGetBook() throws Exception {
         long id = 1;
 
-        Book storedBook = createBook(id, "title1", 2021, 2L, "name1");
-        Author storedAuthor = storedBook.getAuthor();
-        Mockito.when(repository.get(id)).thenReturn(storedBook);
+        Book book = createBook(id, "title1", 2021, 2L, "name1");
+        Author author = book.getAuthor();
+        Mockito.when(repository.get(id)).thenReturn(book);
 
         performGetBook(id)
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(id))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(storedBook.getTitle()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.year").value(storedBook.getYear()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.author.id").value(storedAuthor.getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.author.name").value(storedAuthor.getName()));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(book.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.year").value(book.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.author.id").value(author.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.author.name").value(author.getName()));
     }
 
     @Test
@@ -51,49 +51,49 @@ public class BookControllerTest extends AbstractControllerTest {
     @Test
     @WithReader
     public void testGetTopBooks() throws Exception {
-        Book storedBook1 = createBook(1L, "title1", 2021, 1L, "name1");
-        Book storedBook2 = createBook(2L, "title2", 2022, 2L, "name2");
+        Book book1 = createBook(1L, "title1", 2021, 1L, "name1");
+        Book book2 = createBook(2L, "title2", 2022, 2L, "name2");
         Mockito.when(repository.getTopBooks(Book.Field.ID, 2))
-                .thenReturn(Arrays.asList(storedBook1, storedBook2));
+                .thenReturn(Arrays.asList(book1, book2));
 
         performGetTopBooks(Book.Field.ID, 2)
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(storedBook1.getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].title").value(storedBook1.getTitle()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].year").value(storedBook1.getYear()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.id").value(storedBook1.getAuthor().getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.name").value(storedBook1.getAuthor().getName()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(storedBook2.getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].title").value(storedBook2.getTitle()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].year").value(storedBook2.getYear()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.id").value(storedBook2.getAuthor().getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.name").value(storedBook2.getAuthor().getName()));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(book1.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].title").value(book1.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].year").value(book1.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.id").value(book1.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.name").value(book1.getAuthor().getName()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(book2.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].title").value(book2.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].year").value(book2.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.id").value(book2.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.name").value(book2.getAuthor().getName()));
     }
 
     @Test
     @WithReader
     public void testGetBooksByAuthor() throws Exception {
-        Book storedBook1 = createBook(1L, "title1", 2021, 1L, "name1");
-        Book storedBook2 = createBook(2L, "title2", 2022, 1L, "name1");
+        Book book1 = createBook(1L, "title1", 2021, 1L, "name1");
+        Book book2 = createBook(2L, "title2", 2022, 1L, "name1");
         Mockito.when(repository.getBooksByAuthor("author"))
-                .thenReturn(Arrays.asList(storedBook1, storedBook2));
+                .thenReturn(Arrays.asList(book1, book2));
 
         performGetBooksByAuthor("author")
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(storedBook1.getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].title").value(storedBook1.getTitle()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].year").value(storedBook1.getYear()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.id").value(storedBook1.getAuthor().getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.name").value(storedBook1.getAuthor().getName()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(storedBook2.getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].title").value(storedBook2.getTitle()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].year").value(storedBook2.getYear()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.id").value(storedBook2.getAuthor().getId()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.name").value(storedBook2.getAuthor().getName()));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(book1.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].title").value(book1.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].year").value(book1.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.id").value(book1.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].author.name").value(book1.getAuthor().getName()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(book2.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].title").value(book2.getTitle()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].year").value(book2.getYear()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.id").value(book2.getAuthor().getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].author.name").value(book2.getAuthor().getName()));
     }
 
     @Test
